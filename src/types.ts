@@ -1,0 +1,40 @@
+export interface Job {
+  id: string;
+  status: 'processing' | 'completed' | 'failed';
+  step: 'extracting_frames' | 'detecting_faces' | 'generating_image' | null;
+  error: string | null;
+  createdAt: number;
+  inputPath: string;
+  resultPath: string | null;
+  mimeType?: string;
+}
+
+export interface Config {
+  port: number;
+  geminiApiKey: string;
+  profilePrompt: string;
+  jobTtlMs: number;
+  maxFileSizeMb: number;
+  frameRate: number;
+}
+
+export interface GenerateResult {
+  buffer: Buffer;
+  mimeType: string;
+  ext: string;
+}
+
+export interface GeminiPart {
+  text?: string;
+  inlineData?: { mimeType: string; data: string };
+}
+
+export interface GeminiResponse {
+  candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
+}
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    jobId?: string;
+  }
+}

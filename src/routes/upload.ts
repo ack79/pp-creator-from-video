@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'node:fs';
@@ -11,14 +11,14 @@ const ALLOWED_MIMES = ['video/mp4', 'video/webm'];
 const ALLOWED_EXTS = ['.mp4', '.webm'];
 
 const storage = multer.diskStorage({
-  destination(req, file, cb) {
+  destination(_req, _file, cb) {
     const id = uuidv4();
-    req.jobId = id;
+    (_req as Request).jobId = id;
     const jobDir = path.join('/tmp/jobs', id);
     fs.mkdirSync(jobDir, { recursive: true });
     cb(null, jobDir);
   },
-  filename(req, file, cb) {
+  filename(_req, file, cb) {
     const ext = file.originalname.endsWith('.webm') ? '.webm' : '.mp4';
     cb(null, `input${ext}`);
   },
@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: config.maxFileSizeMb * 1024 * 1024 },
-  fileFilter(req, file, cb) {
+  fileFilter(_req, file, cb) {
     const ext = path.extname(file.originalname).toLowerCase();
     if (ALLOWED_MIMES.includes(file.mimetype) || ALLOWED_EXTS.includes(ext)) {
       cb(null, true);
@@ -39,12 +39,13 @@ const upload = multer({
 
 const router = Router();
 
-router.post('/', upload.single('video'), (req, res) => {
+router.post('/', upload.single('video'), (req: Request, res: Response) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No video file provided' });
+    res.status(400).json({ error: 'No video file provided' });
+    return;
   }
 
-  const id = req.jobId;
+  const id = req.jobId!;
   const inputPath = req.file.path;
 
   createJob(id, inputPath);
@@ -56,17 +57,20 @@ router.post('/', upload.single('video'), (req, res) => {
 });
 
 // Multer error handling
-router.use((err, req, res, next) => {
+router.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ error: `File too large. Max size: ${config.maxFileSizeMb}MB` });
+      res.status(413).json({ error: `File too large. Max size: ${config.maxFileSizeMb}MB` });
+      return;
     }
     if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-      return res.status(415).json({ error: 'Only MP4 and WebM video files are accepted' });
+      res.status(415).json({ error: 'Only MP4 and WebM video files are accepted' });
+      return;
     }
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
+    return;
   }
-  next(err);
+  _next(err);
 });
 
 export default router;

@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises';
+import type { GenerateResult, GeminiResponse, GeminiPart } from '../types.js';
 import { config } from '../config.js';
 
 const MODEL = 'gemini-3.1-flash-image-preview';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-export async function generateProfilePicture(imagePath) {
+export async function generateProfilePicture(imagePath: string): Promise<GenerateResult> {
   const imageBuffer = await fs.readFile(imagePath);
   const base64Image = imageBuffer.toString('base64');
 
@@ -40,9 +41,8 @@ export async function generateProfilePicture(imagePath) {
       throw new Error(`Gemini API error (${response.status}): ${errorText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as GeminiResponse;
 
-    // Extract image from response parts
     const candidates = data.candidates;
     if (!candidates || candidates.length === 0) {
       throw new Error('Gemini API returned no candidates');
@@ -53,9 +53,8 @@ export async function generateProfilePicture(imagePath) {
       throw new Error('Gemini API returned no parts in response');
     }
 
-    // Response uses camelCase (inlineData/mimeType)
-    const imagePart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-    if (!imagePart) {
+    const imagePart = parts.find((p: GeminiPart) => p.inlineData?.mimeType?.startsWith('image/'));
+    if (!imagePart?.inlineData) {
       console.error('Gemini response parts:', JSON.stringify(parts.map(p => Object.keys(p))));
       throw new Error('Gemini API did not return an image');
     }

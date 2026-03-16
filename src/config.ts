@@ -1,6 +1,11 @@
 import 'dotenv/config';
+import type { Config } from './types.js';
 
-export const config = {
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY environment variable is required');
+}
+
+export const config: Config = {
   port: parseInt(process.env.PORT || '3000', 10),
   geminiApiKey: process.env.GEMINI_API_KEY,
   profilePrompt: process.env.PROFILE_PROMPT ||

@@ -12,7 +12,7 @@ app.use('/upload', uploadRouter);
 app.use('/result', resultRouter);
 
 // Health check
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 // Ensure tmp directory exists
 fs.mkdirSync('/tmp/jobs', { recursive: true });

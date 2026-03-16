@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import type { Job } from '../types.js';
 import { config } from '../config.js';
 
-const jobs = new Map();
+const jobs = new Map<string, Job>();
 
-export function createJob(id, inputPath) {
-  const job = {
+export function createJob(id: string, inputPath: string): Job {
+  const job: Job = {
     id,
     status: 'processing',
     step: null,
@@ -18,18 +19,18 @@ export function createJob(id, inputPath) {
   return job;
 }
 
-export function updateJob(id, updates) {
+export function updateJob(id: string, updates: Partial<Job>): Job | null {
   const job = jobs.get(id);
   if (!job) return null;
   Object.assign(job, updates);
   return job;
 }
 
-export function getJob(id) {
+export function getJob(id: string): Job | null {
   return jobs.get(id) || null;
 }
 
-export async function deleteJob(id) {
+export async function deleteJob(id: string): Promise<void> {
   const job = jobs.get(id);
   if (!job) return;
   const jobDir = path.dirname(job.inputPath);
@@ -41,7 +42,7 @@ export async function deleteJob(id) {
   jobs.delete(id);
 }
 
-export function startCleanup() {
+export function startCleanup(): NodeJS.Timeout {
   const interval = setInterval(async () => {
     const now = Date.now();
     for (const [id, job] of jobs) {
