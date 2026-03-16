@@ -192,6 +192,50 @@
   }
   .result-actions .btn { flex: 1; }
 
+  .prompt-box {
+    margin-top: 16px;
+    text-align: left;
+  }
+  .prompt-label {
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .prompt-text {
+    font-size: 0.75rem;
+    color: #aaa;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+    line-height: 1.4;
+  }
+
+  .source-frames {
+    margin-top: 16px;
+  }
+  .source-frames-label {
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  .source-frames-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .source-frames-row img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #333;
+  }
+
   /* Error */
   .error-msg {
     margin-top: 16px;
@@ -261,6 +305,14 @@
     <div class="result-actions">
       <button class="btn btn-primary" id="downloadBtn">Indir</button>
       <button class="btn btn-secondary" id="retryBtn">Tekrar Olustur</button>
+    </div>
+    <div class="source-frames" id="sourceFrames" style="display:none">
+      <div class="source-frames-label">Kaynak Kareler</div>
+      <div class="source-frames-row" id="framesRow"></div>
+    </div>
+    <div class="prompt-box" id="promptBox" style="display:none">
+      <div class="prompt-label">Prompt</div>
+      <div class="prompt-text" id="promptText"></div>
     </div>
   </div>
 </div>
@@ -403,6 +455,41 @@ function showResult(imageUrl) {
   resultSection.classList.add('active');
   resultImg.src = imageUrl;
   submitBtn.disabled = false;
+  loadSourceFrames(currentJobId);
+  loadPrompt(currentJobId);
+}
+
+async function loadSourceFrames(jobId) {
+  const framesContainer = $('sourceFrames');
+  const framesRow = $('framesRow');
+  framesRow.innerHTML = '';
+  framesContainer.style.display = 'none';
+  try {
+    const res = await fetch(`/result/${jobId}/frames`);
+    if (!res.ok) return;
+    const { frames } = await res.json();
+    frames.forEach((idx) => {
+      const img = document.createElement('img');
+      img.src = `/result/${jobId}/frames/${idx}`;
+      img.alt = `Frame ${idx}`;
+      framesRow.appendChild(img);
+    });
+    if (frames.length > 0) framesContainer.style.display = '';
+  } catch {}
+}
+
+async function loadPrompt(jobId) {
+  const promptBox = $('promptBox');
+  const promptText = $('promptText');
+  promptBox.style.display = 'none';
+  promptText.textContent = '';
+  try {
+    const res = await fetch(`/result/${jobId}/prompt`);
+    if (!res.ok) return;
+    const { prompt } = await res.json();
+    promptText.textContent = prompt;
+    promptBox.style.display = '';
+  } catch {}
 }
 
 function showError(msg) {
@@ -423,6 +510,10 @@ function resetUI() {
   if (resultImg.src.startsWith('blob:')) {
     URL.revokeObjectURL(resultImg.src);
   }
+  $('sourceFrames').style.display = 'none';
+  $('framesRow').innerHTML = '';
+  $('promptBox').style.display = 'none';
+  $('promptText').textContent = '';
 }
 
 function downloadResult() {

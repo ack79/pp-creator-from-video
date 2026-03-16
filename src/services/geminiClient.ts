@@ -68,7 +68,7 @@ export async function generateProfilePicture(
 
     const mimeType = imagePart.inlineData.mimeType;
     const ext = mimeType === 'image/png' ? '.png' : '.jpg';
-    return { buffer: Buffer.from(imagePart.inlineData.data, 'base64'), mimeType, ext };
+    return { buffer: Buffer.from(imagePart.inlineData.data, 'base64'), mimeType, ext, prompt: promptText };
   } finally {
     clearTimeout(timeout);
   }

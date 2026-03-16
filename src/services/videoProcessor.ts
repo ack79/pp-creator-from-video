@@ -17,7 +17,7 @@ export async function processVideo(jobId: string): Promise<void> {
 
     const framePaths = await runPythonScript(job.inputPath, jobDir);
 
-    updateJob(jobId, { step: 'detecting_faces' });
+    updateJob(jobId, { step: 'detecting_faces', framePaths });
     // Face detection happened inside the Python script already
     // Verify all outputs exist
     await Promise.all(framePaths.map(p => fs.access(p)));
@@ -25,12 +25,15 @@ export async function processVideo(jobId: string): Promise<void> {
     // Step 2: Generate profile picture via Gemini
     updateJob(jobId, { step: 'generating_image' });
 
-    const { buffer, mimeType, ext } = await generateProfilePicture(framePaths, job.style, job.country);
+    const { buffer, mimeType, ext, prompt } = await generateProfilePicture(framePaths, job.style, job.country);
     const resultPath = path.join(jobDir, `result${ext}`);
     await fs.writeFile(resultPath, buffer);
 
+    // Copy frames + result to debug directory (if volume mounted)
+    await copyToDebug(jobId, framePaths, resultPath);
+
     // Step 3: Mark completed
-    updateJob(jobId, { status: 'completed', step: null, resultPath, mimeType });
+    updateJob(jobId, { status: 'completed', step: null, resultPath, mimeType, prompt });
   } catch (err: unknown) {
     updateJob(jobId, {
       status: 'failed',
@@ -77,4 +80,17 @@ function runPythonScript(inputPath: string, outputDir: string): Promise<string[]
       reject(new Error(`Failed to spawn Python script: ${err.message}`));
     });
   });
+}
+
+async function copyToDebug(jobId: string, framePaths: string[], resultPath: string): Promise<void> {
+  const debugDir = path.join('/data/debug', jobId);
+  try {
+    await fs.mkdir(debugDir, { recursive: true });
+    await Promise.all(
+      framePaths.map((fp, i) => fs.copyFile(fp, path.join(debugDir, `frame_${i}.jpg`)))
+    );
+    await fs.copyFile(resultPath, path.join(debugDir, `result${path.extname(resultPath)}`));
+  } catch {
+    // Silently skip if /data/debug is not mounted
+  }
 }

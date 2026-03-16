@@ -10,6 +10,8 @@ export interface Job {
   createdAt: number;
   inputPath: string;
   resultPath: string | null;
+  framePaths?: string[];
+  prompt?: string;
   mimeType?: string;
   country?: string | null;
   style: Style;
@@ -28,6 +30,7 @@ export interface GenerateResult {
   buffer: Buffer;
   mimeType: string;
   ext: string;
+  prompt: string;
 }
 
 export interface GeminiPart {
