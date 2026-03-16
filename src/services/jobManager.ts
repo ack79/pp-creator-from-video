@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { Job } from '../types.js';
+import type { Job, Style } from '../types.js';
 import { config } from '../config.js';
 
 const jobs = new Map<string, Job>();
 
-export function createJob(id: string, inputPath: string, country?: string): Job {
+export function createJob(id: string, inputPath: string, style: Style, country?: string): Job {
   const job: Job = {
     id,
     status: 'processing',
@@ -15,6 +15,7 @@ export function createJob(id: string, inputPath: string, country?: string): Job 
     inputPath,
     resultPath: null,
     country: country ?? null,
+    style,
   };
   jobs.set(id, job);
   return job;

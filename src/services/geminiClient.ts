@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
-import type { GenerateResult, GeminiResponse, GeminiPart } from '../types.js';
+import type { GenerateResult, GeminiResponse, GeminiPart, Style } from '../types.js';
+import { buildPrompt } from './promptBuilder.js';
 import { config } from '../config.js';
 
 const MODEL = 'gemini-3.1-flash-image-preview';
@@ -7,6 +8,7 @@ const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL
 
 export async function generateProfilePicture(
   imagePaths: string[],
+  style: Style,
   country?: string | null,
 ): Promise<GenerateResult> {
   const imageBuffers = await Promise.all(imagePaths.map(p => fs.readFile(p)));
@@ -15,10 +17,7 @@ export async function generateProfilePicture(
     inline_data: { mime_type: 'image/jpeg', data: buf.toString('base64') },
   }));
 
-  let promptText = config.profilePrompt;
-  if (country) {
-    promptText += `\n\nThe person is from ${country}. Use a background and setting that feels natural and culturally appropriate for someone from ${country}.`;
-  }
+  const promptText = buildPrompt(style, imagePaths.length, country);
 
   const parts = [...imageParts, { text: promptText }];
 

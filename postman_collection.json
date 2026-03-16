@@ -1,0 +1,101 @@
+{
+  "info": {
+    "name": "PP Creator",
+    "description": "Video to Profile Picture Generator API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Upload Video",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 202) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('jobId', json.id);",
+              "    pm.test('Job ID saved', function() {",
+              "        pm.expect(json.id).to.be.a('string');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "video",
+              "type": "file",
+              "src": "",
+              "description": "MP4 or WebM video file (max 50MB)"
+            },
+            {
+              "key": "style",
+              "value": "casual",
+              "type": "text",
+              "description": "(Optional) One of: casual (default), professional, creative"
+            },
+            {
+              "key": "country",
+              "value": "Turkey",
+              "type": "text",
+              "description": "(Optional) Country — influences background and clothing"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/upload",
+          "host": ["{{baseUrl}}"],
+          "path": ["upload"]
+        },
+        "description": "Upload a video to generate a profile picture. Returns a job ID to poll for the result."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Result",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/result/{{jobId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["result", "{{jobId}}"]
+        },
+        "description": "Poll for job status. Returns JSON while processing, the image directly when completed."
+      },
+      "response": []
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the server is running."
+      },
+      "response": []
+    }
+  ]
+}

@@ -25,7 +25,7 @@ export async function processVideo(jobId: string): Promise<void> {
     // Step 2: Generate profile picture via Gemini
     updateJob(jobId, { step: 'generating_image' });
 
-    const { buffer, mimeType, ext } = await generateProfilePicture(framePaths, job.country);
+    const { buffer, mimeType, ext } = await generateProfilePicture(framePaths, job.style, job.country);
     const resultPath = path.join(jobDir, `result${ext}`);
     await fs.writeFile(resultPath, buffer);
 

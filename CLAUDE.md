@@ -37,7 +37,8 @@ video-to-profile-pic/
 │   ├── services/
 │   │   ├── jobManager.ts      # Job state management + cleanup
 │   │   ├── videoProcessor.ts  # Orchestrates the pipeline (spawns Python, calls Gemini)
-│   │   └── geminiClient.ts    # Google Gemini API image editing client (multi-image)
+│   │   ├── geminiClient.ts    # Google Gemini API image editing client (multi-image)
+│   │   └── promptBuilder.ts   # Prompt template system with per-style randomized elements
 │   └── config.ts              # Environment config
 ├── scripts/
 │   └── extract_best_frame.py  # Python script: ffmpeg extract + OpenCV face detect + diversity selection
@@ -52,7 +53,8 @@ video-to-profile-pic/
 - **Content-Type:** multipart/form-data
 - **Fields:**
   - `video` (file field) — required
-  - `country` (text field) — optional, used for culturally appropriate backgrounds in generation
+  - `style` (text field) — optional, one of `casual` (default), `professional`, `creative`
+  - `country` (text field) — optional, influences background and clothing to be culturally appropriate
 - **Accepted formats:** `video/mp4`, `video/webm`
 - **Max file size:** 50MB
 - **Response:** `{ "id": "<uuid>" }`
@@ -82,8 +84,8 @@ When a video is uploaded, the following pipeline runs asynchronously:
 
 ### Step 2: Gemini API Multi-Image-to-Image
 - Read all selected frames from disk
-- Send them all to Google Gemini API as multiple base64 inline images along with the profile picture prompt
-- If a country was provided at upload, append country-specific context to the prompt
+- Build the prompt dynamically via `promptBuilder.ts` based on the selected style, with randomized elements (expression, pose, clothing, background) and optional country context
+- Send all frames to Google Gemini API as multiple base64 inline images along with the built prompt
 - Model: Use the current Gemini image generation capable model (e.g., `gemini-3.1-flash-image-preview` or latest available image model)
 - The API call:
   ```
@@ -95,7 +97,7 @@ When a video is uploaded, the following pipeline runs asynchronously:
         { inline_data: { mime_type: "image/jpeg", data: "<base64_frame_0>" } },
         { inline_data: { mime_type: "image/jpeg", data: "<base64_frame_1>" } },
         { inline_data: { mime_type: "image/jpeg", data: "<base64_frame_2>" } },
-        { text: "<PROFILE_PROMPT> + optional country context" }
+        { text: "<dynamically built prompt from promptBuilder.ts>" }
       ]
     }],
     generationConfig: {
@@ -123,7 +125,8 @@ Use a simple Map or plain object to track jobs:
   createdAt: number (Date.now()),
   inputPath: string,
   resultPath: string | null,
-  country: string | null
+  country: string | null,
+  style: 'casual' | 'professional' | 'creative'
 }
 ```
 
@@ -137,7 +140,6 @@ Use a simple Map or plain object to track jobs:
 ```
 PORT=3000                          # Server port
 GEMINI_API_KEY=                    # Google Gemini API key (required)
-PROFILE_PROMPT="..."               # Prompt sent to Gemini for image generation
 JOB_TTL_MS=3600000                 # Job time-to-live in ms (default: 1 hour)
 MAX_FILE_SIZE_MB=50                # Max upload size in MB
 FRAME_RATE=2                       # Frames per second to extract from video

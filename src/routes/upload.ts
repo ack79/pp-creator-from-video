@@ -6,6 +6,7 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { createJob } from '../services/jobManager.js';
 import { processVideo } from '../services/videoProcessor.js';
+import { VALID_STYLES, type Style } from '../types.js';
 
 const ALLOWED_MIMES = ['video/mp4', 'video/webm'];
 const ALLOWED_EXTS = ['.mp4', '.webm'];
@@ -51,7 +52,10 @@ router.post('/', upload.single('video'), (req: Request, res: Response) => {
     ? req.body.country.trim()
     : undefined;
 
-  createJob(id, inputPath, country);
+  const rawStyle = typeof req.body.style === 'string' ? req.body.style.trim().toLowerCase() : '';
+  const style: Style = VALID_STYLES.includes(rawStyle as Style) ? (rawStyle as Style) : 'casual';
+
+  createJob(id, inputPath, style, country);
 
   // Fire-and-forget
   processVideo(id);

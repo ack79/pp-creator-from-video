@@ -1,3 +1,7 @@
+export type Style = 'casual' | 'professional' | 'creative';
+
+export const VALID_STYLES: readonly Style[] = ['casual', 'professional', 'creative'];
+
 export interface Job {
   id: string;
   status: 'processing' | 'completed' | 'failed';
@@ -8,12 +12,12 @@ export interface Job {
   resultPath: string | null;
   mimeType?: string;
   country?: string | null;
+  style: Style;
 }
 
 export interface Config {
   port: number;
   geminiApiKey: string;
-  profilePrompt: string;
   jobTtlMs: number;
   maxFileSizeMb: number;
   frameRate: number;
