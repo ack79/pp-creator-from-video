@@ -15,17 +15,17 @@ export async function processVideo(jobId: string): Promise<void> {
     // Step 1: Extract frames + detect faces (Python sidecar)
     updateJob(jobId, { step: 'extracting_frames' });
 
-    const bestFramePath = await runPythonScript(job.inputPath, jobDir);
+    const framePaths = await runPythonScript(job.inputPath, jobDir);
 
     updateJob(jobId, { step: 'detecting_faces' });
     // Face detection happened inside the Python script already
-    // Verify the output exists
-    await fs.access(bestFramePath);
+    // Verify all outputs exist
+    await Promise.all(framePaths.map(p => fs.access(p)));
 
     // Step 2: Generate profile picture via Gemini
     updateJob(jobId, { step: 'generating_image' });
 
-    const { buffer, mimeType, ext } = await generateProfilePicture(bestFramePath);
+    const { buffer, mimeType, ext } = await generateProfilePicture(framePaths, job.country);
     const resultPath = path.join(jobDir, `result${ext}`);
     await fs.writeFile(resultPath, buffer);
 
@@ -40,13 +40,14 @@ export async function processVideo(jobId: string): Promise<void> {
   }
 }
 
-function runPythonScript(inputPath: string, outputDir: string): Promise<string> {
+function runPythonScript(inputPath: string, outputDir: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
     const proc = spawn('python3', [
       path.resolve('scripts/extract_best_frame.py'),
       inputPath,
       outputDir,
       String(config.frameRate),
+      String(config.numFrames),
     ]);
 
     let stdout = '';
@@ -59,11 +60,15 @@ function runPythonScript(inputPath: string, outputDir: string): Promise<string> 
       if (code !== 0) {
         reject(new Error(stderr.trim() || `Python script exited with code ${code}`));
       } else {
-        const outputPath = stdout.trim();
-        if (!outputPath) {
-          reject(new Error('Python script produced no output path'));
-        } else {
-          resolve(outputPath);
+        try {
+          const result = JSON.parse(stdout.trim()) as { frames: string[] };
+          if (!result.frames || result.frames.length === 0) {
+            reject(new Error('Python script returned no frame paths'));
+          } else {
+            resolve(result.frames);
+          }
+        } catch {
+          reject(new Error(`Failed to parse Python script output: ${stdout.trim()}`));
         }
       }
     });

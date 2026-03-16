@@ -7,6 +7,7 @@ export interface Job {
   inputPath: string;
   resultPath: string | null;
   mimeType?: string;
+  country?: string | null;
 }
 
 export interface Config {
@@ -16,6 +17,7 @@ export interface Config {
   jobTtlMs: number;
   maxFileSizeMb: number;
   frameRate: number;
+  numFrames: number;
 }
 
 export interface GenerateResult {

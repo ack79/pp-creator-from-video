@@ -5,7 +5,7 @@ import { config } from '../config.js';
 
 const jobs = new Map<string, Job>();
 
-export function createJob(id: string, inputPath: string): Job {
+export function createJob(id: string, inputPath: string, country?: string): Job {
   const job: Job = {
     id,
     status: 'processing',
@@ -14,6 +14,7 @@ export function createJob(id: string, inputPath: string): Job {
     createdAt: Date.now(),
     inputPath,
     resultPath: null,
+    country: country ?? null,
   };
   jobs.set(id, job);
   return job;

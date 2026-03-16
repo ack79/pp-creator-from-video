@@ -47,8 +47,11 @@ router.post('/', upload.single('video'), (req: Request, res: Response) => {
 
   const id = req.jobId!;
   const inputPath = req.file.path;
+  const country = typeof req.body.country === 'string' && req.body.country.trim()
+    ? req.body.country.trim()
+    : undefined;
 
-  createJob(id, inputPath);
+  createJob(id, inputPath, country);
 
   // Fire-and-forget
   processVideo(id);

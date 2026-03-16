@@ -9,8 +9,9 @@ export const config: Config = {
   port: parseInt(process.env.PORT || '3000', 10),
   geminiApiKey: process.env.GEMINI_API_KEY,
   profilePrompt: process.env.PROFILE_PROMPT ||
-    'Transform this photo into a high-quality, attractive social media profile picture. Keep the person\'s face and features exactly the same. Clean soft blurred background, natural studio lighting. Professional portrait photography style. Square crop, centered face.',
+    'Create a professional, high-quality social media profile picture based on these reference photos. Preserve the person\'s face, facial features, and likeness exactly. Dress the person in smart casual attire (not the clothing from the reference photos). Use a clean, softly blurred neutral background with natural studio lighting. Professional portrait photography style, square crop, face centered and well-framed.',
   jobTtlMs: parseInt(process.env.JOB_TTL_MS || '3600000', 10),
   maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB || '50', 10),
   frameRate: parseInt(process.env.FRAME_RATE || '2', 10),
+  numFrames: parseInt(process.env.NUM_FRAMES || '3', 10),
 };

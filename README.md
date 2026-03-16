@@ -4,9 +4,9 @@ A Dockerized microservice that extracts the best face frame from a video and gen
 
 ## How It Works
 
-1. Upload an MP4 or WebM video
-2. The service extracts frames and finds the sharpest face using OpenCV
-3. That frame is sent to Google Gemini API to generate a polished profile picture
+1. Upload an MP4 or WebM video (optionally specify a country)
+2. The service extracts multiple frames and selects the top diverse face frames using OpenCV
+3. Those frames are sent to Google Gemini API to generate a polished profile picture
 4. Poll for the result and download the final image
 
 ## Quick Start
@@ -44,6 +44,7 @@ Content-Type: multipart/form-data
 | Field | Type | Description |
 |-------|------|-------------|
 | `video` | file | MP4 or WebM video (max 50MB) |
+| `country` | text | *(Optional)* Country of the person, used to generate culturally appropriate backgrounds |
 
 **Response** `202`
 
@@ -54,7 +55,7 @@ Content-Type: multipart/form-data
 **Example**
 
 ```bash
-curl -X POST -F "video=@myvideo.mp4" http://localhost:3000/upload
+curl -X POST -F "video=@myvideo.mp4" -F "country=Turkey" http://localhost:3000/upload
 ```
 
 ### Check Result
@@ -109,6 +110,7 @@ All options are set via environment variables in `.env`:
 | `JOB_TTL_MS` | `3600000` | Job expiry time in ms (1 hour) |
 | `MAX_FILE_SIZE_MB` | `50` | Max upload file size |
 | `FRAME_RATE` | `2` | Frames per second to extract from video |
+| `NUM_FRAMES` | `3` | Number of diverse face frames to send to Gemini |
 
 ## Project Structure
 
@@ -118,24 +120,26 @@ All options are set via environment variables in `.env`:
 ├── package.json
 ├── scripts/
 │   └── extract_best_frame.py   # Frame extraction + face detection
+├── tsconfig.json
 ├── src/
-│   ├── index.js                # Express server
-│   ├── config.js               # Environment config
+│   ├── index.ts                # Express server
+│   ├── config.ts               # Environment config
+│   ├── types.ts                # Shared TypeScript interfaces
 │   ├── routes/
-│   │   ├── upload.js           # POST /upload
-│   │   └── result.js           # GET /result/:id
+│   │   ├── upload.ts           # POST /upload
+│   │   └── result.ts           # GET /result/:id
 │   └── services/
-│       ├── jobManager.js       # In-memory job store + cleanup
-│       ├── videoProcessor.js   # Processing pipeline orchestrator
-│       └── geminiClient.js     # Gemini API client
+│       ├── jobManager.ts       # In-memory job store + cleanup
+│       ├── videoProcessor.ts   # Processing pipeline orchestrator
+│       └── geminiClient.ts     # Gemini API client
 ```
 
 ## Tech Stack
 
-- **Node.js 20** + Express
+- **Node.js 20** + Express + **TypeScript**
 - **Python 3** + OpenCV for face detection
 - **ffmpeg** for frame extraction
-- **Google Gemini API** for image generation
+- **Google Gemini API** for image generation (multi-image input)
 - **Docker** — single container with all dependencies
 
 ## Notes
