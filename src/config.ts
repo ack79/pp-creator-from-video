@@ -6,7 +6,7 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 export const config: Config = {
-  port: parseInt(process.env.PORT || '3000', 10),
+  port: parseInt(process.env.PORT || '6232', 10),
   geminiApiKey: process.env.GEMINI_API_KEY,
   jobTtlMs: parseInt(process.env.JOB_TTL_MS || '3600000', 10),
   maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB || '50', 10),

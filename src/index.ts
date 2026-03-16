@@ -1,13 +1,18 @@
 import express from 'express';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { startCleanup } from './services/jobManager.js';
 import uploadRouter from './routes/upload.js';
 import resultRouter from './routes/result.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const app = express();
 app.use(express.json());
 
+app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/upload', uploadRouter);
 app.use('/result', resultRouter);
 

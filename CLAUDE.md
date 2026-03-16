@@ -138,7 +138,7 @@ Use a simple Map or plain object to track jobs:
 
 ## Environment Variables
 ```
-PORT=3000                          # Server port
+PORT=6232                          # Server port
 GEMINI_API_KEY=                    # Google Gemini API key (required)
 JOB_TTL_MS=3600000                 # Job time-to-live in ms (default: 1 hour)
 MAX_FILE_SIZE_MB=50                # Max upload size in MB
@@ -153,13 +153,13 @@ NUM_FRAMES=3                       # Number of diverse face frames to extract an
 - Install: `python3`, `python3-pip`, `ffmpeg`, `libgl1-mesa-glx`, `libglib2.0-0`
 - Install Python packages: `opencv-python-headless`, `numpy`
 - Copy project files, run `npm install`, compile with `tsc`, then `npm prune --production`
-- Expose port 3000
+- Expose port 6232
 - CMD: `node dist/index.js`
 
 ### docker-compose.yml
 - Single service
 - Mount `.env` file
-- Port mapping: `3000:3000`
+- Port mapping: `6232:6232`
 - No volumes needed (tmp is ephemeral)
 
 ## Python Script: extract_best_frame.py

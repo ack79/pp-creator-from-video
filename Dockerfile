@@ -14,8 +14,9 @@ COPY src/ src/
 RUN npx tsc
 RUN npm prune --production
 
+COPY public/ public/
 COPY scripts/ scripts/
 RUN mkdir -p /tmp/jobs
 
-EXPOSE 3000
+EXPOSE 6232
 CMD ["node", "dist/index.js"]

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PP Creator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    padding: 24px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #fff;
+  }
+
+  /* Upload area */
+  .upload-area {
+    border: 2px dashed #333;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-area:hover, .upload-area.dragover {
+    border-color: #666;
+    background: #1a1a1a;
+  }
+  .upload-area.has-file {
+    border-color: #4a9eff;
+    background: #0d1b2a;
+  }
+  .upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .upload-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+  .upload-text {
+    font-size: 0.9rem;
+    color: #888;
+  }
+  .file-name {
+    font-size: 0.85rem;
+    color: #4a9eff;
+    margin-top: 8px;
+    word-break: break-all;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .options label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    font-size: 0.8rem;
+    color: #888;
+  }
+  .options select, .options input[type="text"] {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: #e0e0e0;
+    font-size: 0.85rem;
+  }
+  .options select:focus, .options input[type="text"]:focus {
+    outline: none;
+    border-color: #4a9eff;
+  }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: opacity 0.2s;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: #4a9eff;
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover {
+    background: #3a8eef;
+  }
+  .btn-secondary {
+    background: #2a2a2a;
+    color: #e0e0e0;
+  }
+  .btn-secondary:not(:disabled):hover {
+    background: #333;
+  }
+
+  /* Progress */
+  .progress-section {
+    margin-top: 24px;
+    display: none;
+  }
+  .progress-section.active { display: block; }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #555;
+    transition: color 0.3s;
+  }
+  .step.active { color: #4a9eff; }
+  .step.done { color: #4ade80; }
+  .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #333;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .step.active .step-dot {
+    background: #4a9eff;
+    box-shadow: 0 0 8px #4a9eff88;
+    animation: pulse 1.5s infinite;
+  }
+  .step.done .step-dot { background: #4ade80; }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+  }
+
+  /* Result */
+  .result-section {
+    margin-top: 24px;
+    display: none;
+    text-align: center;
+  }
+  .result-section.active { display: block; }
+
+  .result-img {
+    width: 100%;
+    max-width: 320px;
+    border-radius: 12px;
+    border: 2px solid #222;
+    margin-bottom: 16px;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .result-actions .btn { flex: 1; }
+
+  /* Error */
+  .error-msg {
+    margin-top: 16px;
+    padding: 12px;
+    background: #2a0a0a;
+    border: 1px solid #5a1a1a;
+    border-radius: 8px;
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    display: none;
+  }
+  .error-msg.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>PP Creator</h1>
+
+  <!-- Upload -->
+  <div class="upload-area" id="uploadArea">
+    <input type="file" id="fileInput" accept="video/mp4,video/webm,.mp4,.webm">
+    <div class="upload-icon">&#x1F3AC;</div>
+    <div class="upload-text">Video yukle (MP4 / WebM, max 50MB)</div>
+    <div class="file-name" id="fileName"></div>
+  </div>
+
+  <!-- Options -->
+  <div class="options">
+    <label>
+      Stil
+      <select id="styleSelect">
+        <option value="casual">Casual</option>
+        <option value="professional">Professional</option>
+        <option value="creative">Creative</option>
+      </select>
+    </label>
+    <label>
+      Ulke (opsiyonel)
+      <input type="text" id="countryInput" placeholder="Turkey">
+    </label>
+  </div>
+
+  <!-- Submit -->
+  <button class="btn btn-primary" id="submitBtn" disabled>Profil Fotografi Olustur</button>
+
+  <!-- Progress -->
+  <div class="progress-section" id="progressSection">
+    <div class="steps">
+      <div class="step" id="step-extracting_frames">
+        <span class="step-dot"></span> Kareler ayiklaniyor...
+      </div>
+      <div class="step" id="step-detecting_faces">
+        <span class="step-dot"></span> Yuzler algilaniyor...
+      </div>
+      <div class="step" id="step-generating_image">
+        <span class="step-dot"></span> Profil fotografi olusturuluyor...
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- Result -->
+  <div class="result-section" id="resultSection">
+    <img class="result-img" id="resultImg" alt="Profile picture">
+    <div class="result-actions">
+      <button class="btn btn-primary" id="downloadBtn">Indir</button>
+      <button class="btn btn-secondary" id="retryBtn">Tekrar Olustur</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.getElementById(s);
+
+const fileInput = $('fileInput');
+const uploadArea = $('uploadArea');
+const fileName = $('fileName');
+const styleSelect = $('styleSelect');
+const countryInput = $('countryInput');
+const submitBtn = $('submitBtn');
+const progressSection = $('progressSection');
+const errorMsg = $('errorMsg');
+const resultSection = $('resultSection');
+const resultImg = $('resultImg');
+const downloadBtn = $('downloadBtn');
+const retryBtn = $('retryBtn');
+
+const STEPS = ['extracting_frames', 'detecting_faces', 'generating_image'];
+let pollTimer = null;
+let currentJobId = null;
+let lastFile = null;
+
+// Drag & drop
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    onFileChange();
+  }
+});
+
+fileInput.addEventListener('change', onFileChange);
+
+function onFileChange() {
+  const file = fileInput.files[0];
+  if (file) {
+    fileName.textContent = file.name;
+    uploadArea.classList.add('has-file');
+    submitBtn.disabled = false;
+    lastFile = file;
+  }
+}
+
+submitBtn.addEventListener('click', startUpload);
+downloadBtn.addEventListener('click', downloadResult);
+retryBtn.addEventListener('click', retryGeneration);
+
+async function startUpload() {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  resetUI();
+  submitBtn.disabled = true;
+  progressSection.classList.add('active');
+  setStep('extracting_frames');
+
+  const form = new FormData();
+  form.append('video', file);
+  form.append('style', styleSelect.value);
+  const country = countryInput.value.trim();
+  if (country) form.append('country', country);
+
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: form });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || `Upload failed (${res.status})`);
+    }
+    const { id } = await res.json();
+    currentJobId = id;
+    startPolling(id);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function startPolling(id) {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => pollResult(id), 1500);
+}
+
+async function pollResult(id) {
+  try {
+    const res = await fetch(`/result/${id}`);
+
+    if (res.status === 404) {
+      clearInterval(pollTimer);
+      showError('Job bulunamadi veya suresi doldu.');
+      return;
+    }
+
+    const contentType = res.headers.get('content-type') || '';
+
+    if (contentType.startsWith('image/')) {
+      clearInterval(pollTimer);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      showResult(url);
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.status === 'processing') {
+      setStep(data.step);
+    } else if (data.status === 'failed') {
+      clearInterval(pollTimer);
+      showError(data.error || 'Islem basarisiz oldu.');
+    }
+  } catch (err) {
+    clearInterval(pollTimer);
+    showError('Baglanti hatasi: ' + err.message);
+  }
+}
+
+function setStep(currentStep) {
+  const idx = STEPS.indexOf(currentStep);
+  STEPS.forEach((s, i) => {
+    const el = $('step-' + s);
+    el.classList.remove('active', 'done');
+    if (i < idx) el.classList.add('done');
+    else if (i === idx) el.classList.add('active');
+  });
+}
+
+function showResult(imageUrl) {
+  progressSection.classList.remove('active');
+  errorMsg.classList.remove('active');
+  resultSection.classList.add('active');
+  resultImg.src = imageUrl;
+  submitBtn.disabled = false;
+}
+
+function showError(msg) {
+  progressSection.classList.remove('active');
+  errorMsg.textContent = msg;
+  errorMsg.classList.add('active');
+  submitBtn.disabled = false;
+}
+
+function resetUI() {
+  progressSection.classList.remove('active');
+  resultSection.classList.remove('active');
+  errorMsg.classList.remove('active');
+  STEPS.forEach(s => {
+    const el = $('step-' + s);
+    el.classList.remove('active', 'done');
+  });
+  if (resultImg.src.startsWith('blob:')) {
+    URL.revokeObjectURL(resultImg.src);
+  }
+}
+
+function downloadResult() {
+  const a = document.createElement('a');
+  a.href = resultImg.src;
+  a.download = 'profile-picture.png';
+  a.click();
+}
+
+function retryGeneration() {
+  if (!lastFile) return;
+  // Re-assign file so startUpload can use it
+  const dt = new DataTransfer();
+  dt.items.add(lastFile);
+  fileInput.files = dt.files;
+  startUpload();
+}
+</script>
+</body>
+</html>

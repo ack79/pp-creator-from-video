@@ -30,7 +30,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The server starts at `http://localhost:3000`.
+The server starts at `http://localhost:6232`.
 
 ## API
 
@@ -55,7 +55,7 @@ Content-Type: multipart/form-data
 **Example**
 
 ```bash
-curl -X POST -F "video=@myvideo.mp4" -F "country=Turkey" http://localhost:3000/upload
+curl -X POST -F "video=@myvideo.mp4" -F "country=Turkey" http://localhost:6232/upload
 ```
 
 ### Check Result
@@ -75,7 +75,7 @@ Steps progress through: `extracting_frames` → `detecting_faces` → `generatin
 **Completed** `200` — Returns the image directly as `image/png`.
 
 ```bash
-curl http://localhost:3000/result/a1b2c3d4-... --output profile.png
+curl http://localhost:6232/result/a1b2c3d4-... --output profile.png
 ```
 
 **Failed** `500`
@@ -104,7 +104,7 @@ All options are set via environment variables in `.env`:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3000` | Server port |
+| `PORT` | `6232` | Server port |
 | `GEMINI_API_KEY` | — | **Required.** Google Gemini API key |
 | `PROFILE_PROMPT` | *(see .env.example)* | Prompt sent to Gemini for image generation |
 | `JOB_TTL_MS` | `3600000` | Job expiry time in ms (1 hour) |
