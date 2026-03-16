@@ -1,0 +1,16 @@
+{
+  "name": "video-to-profile-pic",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Video to profile picture generator using face detection and Gemini API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^11.1.0"
+  }
+}
